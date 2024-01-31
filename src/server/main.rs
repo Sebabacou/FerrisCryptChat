@@ -22,12 +22,12 @@ fn main() {
         Ok(listener) => listener,
         Err(_) => exit(1)
     };
-    let mut id: i32 = 0;
+    let mut id: u32 = 0;
     for stream in listener.incoming() {
         match stream {
             Ok(stream) => {
-                thread::spawn( move || { handle_client::Client::new_client(id, stream) });
                 id += 1;
+                thread::spawn( move || { handle_client::Client::new_client(id, stream) });
             },
             Err(e) => println!("Error: {e}")
         }
