@@ -18,7 +18,11 @@ impl Client {
         client.message_handler();
     }
 
-    //TODO : send ACK
+    fn answer_to_client(&mut self) {
+        let msg = "ACK\0";
+        println!("server answer");
+        self.stream.write_all(msg.as_bytes()).expect(format!("Unable to send ACK to client {}", self.id).as_str());
+    }
 
     fn message_handler(&mut self) {
         let mut buffer = Vec::new();
@@ -35,6 +39,7 @@ impl Client {
                     let msg = String::from_utf8_lossy(&buffer);
                     println!("Message from {0} : {msg}", self.id);
                     buffer.clear();
+                    self.answer_to_client();
                 }
                 Err(e) => {
                     println!("Failed to read message from {0} : {e}", self.id);
