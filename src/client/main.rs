@@ -15,8 +15,21 @@ fn connect_to_server() -> std::io::Result<TcpStream> {
     }
 }
 
+fn wait_answer_from_server(stream: &mut TcpStream) {
+    let mut buffer = Vec::new();
+    let reader = stream.try_clone().expect("Client failed to clone stream");
+    let mut reader = std::io::BufReader::new(reader);
+    match reader.read_until(b'\0', &mut buffer) {
+        Ok(_) => {
+            println!("Server get the message");
+        },
+        Err(_) => {
+            println!("Failed take answer of server");
+        }
+    }
+}
 fn send_message(stream: &mut TcpStream) {
-    loop { //TODO : check ACK before continue
+    loop {
         let mut msg = String::new();
         std::io::stdin().read_line(&mut msg).expect("Failed to read input");
         if msg.is_empty() || msg.trim() == "exit" {
@@ -24,7 +37,7 @@ fn send_message(stream: &mut TcpStream) {
         }
         msg.push_str("\0");
         stream.write_all(msg.as_bytes()).expect("Failed to send message.");
-        println!("msg send");
+        wait_answer_from_server(stream);
     }
 }
 
