@@ -5,14 +5,14 @@ const ALL: u32 = 0;
 const SERVER: u32 = 4294967295;
 
 macro_rules! answer {
-    ($msg:expr) => {
-        format!("{}\0", $msg as u32)
+    ($msg:expr, $id:expr) => {
+        format!("<!STATUS!>{}::{}\0", $id, $msg as u32)
     };
 }
 
 enum StateAnswer {
     // TestPing = 00,
-    // ConnectionEstablished = 10,
+    ConnectionEstablished = 10,
     // ConnectionClosed = 11,
     MessageSent = 20,
     // MessageNotSent = 21,
@@ -38,11 +38,12 @@ impl Client {
             client.stream.peer_addr().unwrap(),
             client.id
         );
+        client.msg_state_client(StateAnswer::ConnectionEstablished);
         client.message_handler();
     }
 
     fn msg_state_client(&mut self, msg: StateAnswer) {
-        let msg = answer!(msg);
+        let msg = answer!(msg, self.id);
         match self.stream.write_all(msg.as_bytes()) {
             Ok(_) => return,
             Err(e) => println!("Failed to send state to client {0} : {e}", self.id),
