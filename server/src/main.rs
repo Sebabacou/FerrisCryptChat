@@ -1,9 +1,11 @@
 mod handle_client;
+mod server_manager;
 
+use std::collections::HashMap;
 use log::{debug, error, info};
-use std::io::Write;
 use std::net::{TcpListener, TcpStream};
 use std::process::exit;
+use std::sync::{Arc, Mutex};
 use std::thread;
 
 fn bind_server(addr: String) -> std::io::Result<TcpListener> {
@@ -19,14 +21,22 @@ fn bind_server(addr: String) -> std::io::Result<TcpListener> {
     }
 }
 
-fn client_connection(listener: TcpListener) {
+fn get_avaible_id(clients: Arc<Mutex<HashMap<u32, TcpStream>>>) -> u32 {
+    let mut id = 1;
+    while clients.lock().unwrap().contains_key(&id) {
+        id += 1;
+    }
+    id
+}
+
+fn client_connection(listener: TcpListener, clients: Arc<Mutex<HashMap<u32, TcpStream>>>) {
     let _ = thread::spawn(move || {
-        let mut id: u32 = 0;
         for stream in listener.incoming() {
             match stream {
                 Ok(stream) => {
-                    id += 1;
-                    thread::spawn(move || handle_client::Client::new_client(id, stream));
+                    let clients = Arc::clone(&clients);
+                    let id = get_avaible_id(Arc::clone(&clients));
+                    thread::spawn(move || handle_client::Client::new_client(id, stream, clients));
                 }
                 Err(e) => error!("Unable to connect: {e}"),
             }
@@ -41,23 +51,9 @@ fn main() {
         Err(_) => exit(1),
     };
 
-    client_connection(listener);
-    loop {
-        let mut msg = String::new();
-        print!("$FCC_Server >_ ");
-        std::io::stdout().flush().unwrap();
-        match std::io::stdin().read_line(&mut msg) {
-            Ok(_) => (),
-            Err(e) => {
-                error!("Unable to read stdin: {e}");
-                panic!();
-            },
-        }
-        if msg.is_empty() || msg.trim() == "exit" {
-            info!("Shutdown server");
-            break;
-        }
-    }
+    let clients: Arc<Mutex<HashMap<u32, TcpStream>>> = Arc::new(Mutex::new(HashMap::new()));
+    client_connection(listener, Arc::clone(&clients));
+    server_manager::ServerManager::server_handle(Arc::clone(&clients));
 }
 
 #[cfg(test)]

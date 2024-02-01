@@ -1,6 +1,8 @@
+use std::collections::HashMap;
 use crate::TcpStream;
 use crate::{debug, error, info};
 use std::io::{BufRead, Write};
+use std::sync::{Arc, Mutex};
 
 const ALL: u32 = 0;
 const SERVER: u32 = 4294967295;
@@ -24,16 +26,18 @@ pub struct Client {
     id: u32,
     stream: TcpStream,
     dest: Option<u32>,
+    clients: Arc<Mutex<HashMap<u32, TcpStream>>>
 }
 
 impl Client {
-    fn new(id: u32, stream: TcpStream) -> Client {
+    fn new(id: u32, stream: TcpStream, clients: Arc<Mutex<HashMap<u32, TcpStream>>>) -> Client {
         let dest: Option<u32> = None;
-        Client { id, stream, dest }
+        Client { id, stream, dest, clients }
     }
 
-    pub fn new_client(id: u32, stream: TcpStream) {
-        let mut client = Client::new(id, stream);
+    pub fn new_client(id: u32, stream: TcpStream, clients: Arc<Mutex<HashMap<u32, TcpStream>>>) {
+        let mut client = Client::new(id, stream, clients.clone());
+        clients.lock().unwrap().insert(id, client.stream.try_clone().unwrap());
         debug!(
             "New connection: {0}, id: {1}",
             client.stream.peer_addr().unwrap(),
@@ -96,6 +100,7 @@ impl Client {
             match reader.read_until(b'\0', &mut buffer) { //TODO : envoie de message
                 Ok(_) => {
                     if buffer.is_empty() {
+                        self.clients.lock().unwrap().remove(&self.id);
                         info!("Client {0}, disconnected.", self.id);
                         return;
                     }
