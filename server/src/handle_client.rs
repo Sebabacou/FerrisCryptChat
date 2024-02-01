@@ -1,6 +1,6 @@
 use crate::TcpStream;
+use crate::{debug, error, info};
 use std::io::{BufRead, Write};
-use log::{debug, error, info};
 
 const ALL: u32 = 0;
 const SERVER: u32 = 4294967295;
