@@ -113,3 +113,18 @@ impl Client {
         }
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn test_answer() {
+        assert_eq!(
+            answer!(StateAnswer::ConnectionEstablished, 1),
+            "<!STATUS!>1::10\0"
+        );
+        assert_eq!(answer!(StateAnswer::MessageSent, 1), "<!STATUS!>1::20\0");
+        assert_eq!(answer!(StateAnswer::BadDestination, 1), "<!STATUS!>1::31\0");
+    }
+}
