@@ -97,14 +97,20 @@ impl Client {
                     );
                 }
                 StateAnswer::MessageSent => {
-                    self.check_id(id).then(|| println!("Message Sent :: {}", StateAnswer::MessageSent.value()));
+                    self.check_id(id)
+                        .then(|| println!("Message Sent :: {}", StateAnswer::MessageSent.value()));
                 }
                 StateAnswer::BadDestination => {
-                    self.check_id(id).then(|| println!("Bad Destination :: {}", StateAnswer::BadDestination.value()));
+                    self.check_id(id).then(|| {
+                        println!("Bad Destination :: {}", StateAnswer::BadDestination.value())
+                    });
                 }
                 StateAnswer::ConnectionClosed => {
                     self.check_id(id).then(|| {
-                       println!("Connection closed by server :: {}", StateAnswer::ConnectionClosed.value());
+                        println!(
+                            "Connection closed by server :: {}",
+                            StateAnswer::ConnectionClosed.value()
+                        );
                     });
                 }
             },

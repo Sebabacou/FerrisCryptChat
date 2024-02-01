@@ -67,7 +67,7 @@ mod tests {
     fn unable_to_bind_server() {
         match bind_server("127.0.0.1:65536".to_string()) {
             Ok(_) => panic!("Should not be able to bind"),
-            Err(e) => assert_eq!(e.kind(), std::io::ErrorKind::AddrNotAvailable)
+            Err(e) => assert_eq!(e.kind(), std::io::ErrorKind::InvalidInput),
         }
     }
 }
