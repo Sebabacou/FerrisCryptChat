@@ -6,10 +6,25 @@ use std::str::FromStr;
 enum StateAnswer {
     // TestPing = 00,
     ConnectionEstablished = 10,
-    // ConnectionClosed = 11,
+    ConnectionClosed = 11,
     MessageSent = 20,
     // MessageNotSent = 21,
     BadDestination = 31,
+}
+
+trait Value {
+    fn value(&self) -> u32;
+}
+
+impl Value for StateAnswer {
+    fn value(&self) -> u32 {
+        match self {
+            StateAnswer::ConnectionEstablished => 10,
+            StateAnswer::ConnectionClosed => 11,
+            StateAnswer::MessageSent => 20,
+            StateAnswer::BadDestination => 31,
+        }
+    }
 }
 
 impl FromStr for StateAnswer {
@@ -18,6 +33,7 @@ impl FromStr for StateAnswer {
     fn from_str(s: &str) -> Result<Self, Self::Err> {
         match s {
             "10\0" => Ok(StateAnswer::ConnectionEstablished),
+            "11\0" => Ok(StateAnswer::ConnectionClosed),
             "20\0" => Ok(StateAnswer::MessageSent),
             "31\0" => Ok(StateAnswer::BadDestination),
             _ => Err(()),
@@ -81,14 +97,15 @@ impl Client {
                     );
                 }
                 StateAnswer::MessageSent => {
-                    if self.check_id(id) {
-                        println!("Message Sent");
-                    }
-                },
+                    self.check_id(id).then(|| println!("Message Sent :: {}", StateAnswer::MessageSent.value()));
+                }
                 StateAnswer::BadDestination => {
-                    if self.check_id(id) {
-                        println!("Bad Destination");
-                    }
+                    self.check_id(id).then(|| println!("Bad Destination :: {}", StateAnswer::BadDestination.value()));
+                }
+                StateAnswer::ConnectionClosed => {
+                    self.check_id(id).then(|| {
+                       println!("Connection closed by server :: {}", StateAnswer::ConnectionClosed.value());
+                    });
                 }
             },
             Err(_) => println!("Answer not know"),
