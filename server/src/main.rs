@@ -1,5 +1,6 @@
 mod handle_client;
 
+use log::{debug, error, info};
 use std::io::Write;
 use std::net::{TcpListener, TcpStream};
 use std::process::exit;
@@ -8,11 +9,11 @@ use std::thread;
 fn bind_server(addr: String) -> std::io::Result<TcpListener> {
     match TcpListener::bind(addr) {
         Ok(listener) => {
-            println!("Listening on {}", listener.local_addr().unwrap());
+            debug!("Listening on {}", listener.local_addr().unwrap());
             Ok(listener)
         }
         Err(e) => {
-            println!("Unable to bind: {e}");
+            error!("Unable to bind: {e}");
             Err(e)
         }
     }
@@ -27,13 +28,14 @@ fn client_connection(listener: TcpListener) {
                     id += 1;
                     thread::spawn(move || handle_client::Client::new_client(id, stream));
                 }
-                Err(e) => println!("Error: {e}"),
+                Err(e) => error!("Unable to connect: {e}"),
             }
         }
     });
 }
 
 fn main() {
+    log4rs::init_file("server/log4rs.yml", Default::default()).unwrap();
     let listener = match bind_server("127.0.0.1:4242".to_string()) {
         Ok(listener) => listener,
         Err(_) => exit(1),
@@ -44,10 +46,15 @@ fn main() {
         let mut msg = String::new();
         print!("$FCC_Server >_ ");
         std::io::stdout().flush().unwrap();
-        std::io::stdin()
-            .read_line(&mut msg)
-            .expect("Failed to read input");
+        match std::io::stdin().read_line(&mut msg) {
+            Ok(_) => (),
+            Err(e) => {
+                error!("Unable to read stdin: {e}");
+                panic!();
+            },
+        }
         if msg.is_empty() || msg.trim() == "exit" {
+            info!("Shutdown server");
             break;
         }
     }

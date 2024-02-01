@@ -1,5 +1,6 @@
 use crate::TcpStream;
 use std::io::{BufRead, Write};
+use log::{debug, error, info};
 
 const ALL: u32 = 0;
 const SERVER: u32 = 4294967295;
@@ -33,7 +34,7 @@ impl Client {
 
     pub fn new_client(id: u32, stream: TcpStream) {
         let mut client = Client::new(id, stream);
-        println!(
+        debug!(
             "New connection: {0}, id: {1}",
             client.stream.peer_addr().unwrap(),
             client.id
@@ -46,7 +47,7 @@ impl Client {
         let msg = answer!(msg, self.id);
         match self.stream.write_all(msg.as_bytes()) {
             Ok(_) => return,
-            Err(e) => println!("Failed to send state to client {0} : {e}", self.id),
+            Err(e) => error!("Failed to send state to client {0} : {e}", self.id),
         }
     }
 
@@ -61,8 +62,8 @@ impl Client {
             },
         };
         match self.dest {
-            Some(value) => println!("Msg dest is : {value}"),
-            None => println!("Invalid destination"),
+            Some(value) => debug!("Msg dest is : {value}"),
+            None => debug!("Invalid destination"),
         }
     }
 
@@ -75,7 +76,7 @@ impl Client {
                 msg
             }
             None => {
-                println!("No destination");
+                debug!("No destination give by client");
                 self.dest = None;
                 &msg
             }
@@ -92,10 +93,10 @@ impl Client {
         let mut reader = std::io::BufReader::new(reader);
 
         loop {
-            match reader.read_until(b'\0', &mut buffer) {
+            match reader.read_until(b'\0', &mut buffer) { //TODO : envoie de message
                 Ok(_) => {
                     if buffer.is_empty() {
-                        println!("Client {0}, disconnected.", self.id);
+                        info!("Client {0}, disconnected.", self.id);
                         return;
                     }
                     let msg = self.get_destination(buffer.clone());
@@ -103,11 +104,11 @@ impl Client {
                         Some(_) => self.msg_state_client(StateAnswer::MessageSent),
                         None => self.msg_state_client(StateAnswer::BadDestination),
                     };
-                    print!("Message from {0} : {msg}", self.id);
+                    debug!("Message from {0} : {msg}", self.id);
                     buffer.clear();
                 }
                 Err(e) => {
-                    println!("Failed to read message from {0} : {e}", self.id);
+                    error!("Failed to read message from {0} : {e}", self.id);
                 }
             }
         }
