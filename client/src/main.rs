@@ -145,6 +145,8 @@ impl Client {
     fn send_message(&mut self) {
         loop {
             let mut msg = String::new();
+            print!("$FCC_Client[{}] >_ ", self.id);
+            std::io::stdout().flush().unwrap();
             std::io::stdin()
                 .read_line(&mut msg)
                 .expect("Failed to read input");
