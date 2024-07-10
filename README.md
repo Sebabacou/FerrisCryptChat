@@ -23,7 +23,7 @@ FerrisCryptChat (F.C.C.) is a simple chat application with end-to-end encryption
 F.C.C is a project for **learn** more about Rust and encryption,
 so I've done everything from scratch (ok I use the crate *log* and *log4rs* but I don't think that counts :) ).
 
-I've started this project the 29/01/2024, and **I'm still working on it**, so it's not finished yet.
+I've started this project the 29/01/2024, and **the project is paused**, so it's not finished yet.
 
 I've also tried to make the code as clean and readable as possible with some documentation
 , so I hope you like it.
